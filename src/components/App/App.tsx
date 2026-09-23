@@ -1,11 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useDebouncedCallback } from 'use-debounce';
 import { useEffect, useState } from 'react';
 
-import { createNote, fetchNotes } from '../../services/noteService';
-import type { NoteTag } from '../../types/note';
+import { fetchNotes } from '../../services/noteService';
 import Modal from '../Modal/Modal';
-import NoteForm, { type NoteFormValues } from '../NoteForm/NoteForm';
+import NoteForm from '../NoteForm/NoteForm';
 import NoteList from '../NoteList/NoteList';
 import Pagination from '../Pagination/Pagination';
 import SearchBox from '../SearchBox/SearchBox';
@@ -18,7 +17,6 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearchQuery(value.trim());
@@ -39,28 +37,12 @@ function App() {
     placeholderData: (previousData) => previousData ?? { notes: [], totalPages: 1 },
   });
 
-  const createNoteMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notes'] });
-      setIsModalOpen(false);
-    },
-  });
-
   const totalPages = notesQuery.data?.totalPages ?? 1;
   const notes = notesQuery.data?.notes ?? [];
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
     debouncedSearch(value);
-  };
-
-  const handleCreateNote = async (values: NoteFormValues) => {
-    await createNoteMutation.mutateAsync({
-      title: values.title,
-      content: values.content,
-      tag: values.tag as NoteTag,
-    });
   };
 
   return (
@@ -89,7 +71,7 @@ function App() {
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <NoteForm onSubmit={handleCreateNote} onCancel={() => setIsModalOpen(false)} />
+        <NoteForm onCancel={() => setIsModalOpen(false)} />
       </Modal>
     </div>
   );
