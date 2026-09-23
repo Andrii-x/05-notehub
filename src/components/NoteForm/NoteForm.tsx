@@ -41,6 +41,7 @@ function NoteForm({ onCancel }: NoteFormProps) {
     mutationFn: createNote,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['notes'] });
+      onCancel();
     },
   });
 
