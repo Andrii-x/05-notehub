@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebouncedCallback } from 'use-debounce';
 import { useEffect, useState } from 'react';
 
-import { createNote, deleteNote, fetchNotes } from '../../services/noteService';
+import { createNote, fetchNotes } from '../../services/noteService';
 import type { NoteTag } from '../../types/note';
 import Modal from '../Modal/Modal';
 import NoteForm, { type NoteFormValues } from '../NoteForm/NoteForm';
@@ -36,6 +36,7 @@ function App() {
         perPage: ITEMS_PER_PAGE,
         search: searchQuery || undefined,
       }),
+    placeholderData: (previousData) => previousData ?? { notes: [], totalPages: 1 },
   });
 
   const createNoteMutation = useMutation({
@@ -43,13 +44,6 @@ function App() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['notes'] });
       setIsModalOpen(false);
-    },
-  });
-
-  const deleteNoteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
   });
 
@@ -67,10 +61,6 @@ function App() {
       content: values.content,
       tag: values.tag as NoteTag,
     });
-  };
-
-  const handleDeleteNote = async (noteId: string) => {
-    await deleteNoteMutation.mutateAsync(noteId);
   };
 
   return (
@@ -92,9 +82,7 @@ function App() {
         <p className={css.status}>Unable to load notes. Please try again later.</p>
       )}
 
-      {!notesQuery.isLoading && !notesQuery.isError && notes.length > 0 && (
-        <NoteList notes={notes} onDelete={handleDeleteNote} />
-      )}
+      {!notesQuery.isLoading && !notesQuery.isError && notes.length > 0 && <NoteList notes={notes} />}
 
       {!notesQuery.isLoading && !notesQuery.isError && notes.length === 0 && (
         <p className={css.empty}>No notes found for your search.</p>
